@@ -17,14 +17,17 @@ class HttpRequest
     raise ArgumentError, 'invalid request line' unless method && target && version
 
     if method == 'CONNECT'
-      host, port_str = target.split(':', 2)
-      raise ArgumentError, 'invalid CONNECT target' unless host && port_str
-
-      port = Integer(port_str)
-      new(method: method, host: host, path: nil, version: version, port: port)
+     build_connect_request(method, target, version)
     else
-      uri = URI(target)
-      raise ArgumentError, 'invalid HTTP URI' unless uri.host
+     build_standard_request(method, target, version)
+    end
+  rescue URI::InvalidURIError
+    raise ArgumentError, 'invalid request line'
+  end
+
+  def self.build_standard_request(method, target, version)
+    uri = URI(target)
+    raise ArgumentError, 'invalid HTTP URI' unless uri.host
 
       request_path = uri.path.empty? ? '/' : uri.path
       request_path += "?#{uri.query}" if uri.query
@@ -32,9 +35,14 @@ class HttpRequest
 
       port = uri.port || default_port_for_scheme(uri.scheme)
       new(method: method, host: uri.host, path: request_path, version: version, port: port)
-    end
-  rescue URI::InvalidURIError
-    raise ArgumentError, 'invalid request line'
+  end
+
+  def self.build_connect_request(method, target, version)
+    host, port_str = target.split(':', 2)
+    raise ArgumentError, 'invalid CONNECT target' unless host && port_str
+
+      port = Integer(port_str)
+      new(method: method, host: host, path: nil, version: version, port: port)
   end
 
   def self.default_port_for_scheme(scheme)
