@@ -3,6 +3,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+echo "==> Configuring local gem path..."
+bundle config set --local path 'vendor/bundle'
+
 echo "==> Installing gem dependencies..."
 bundle install
 
