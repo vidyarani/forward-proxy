@@ -37,7 +37,7 @@ class HttpForwarder
   end
 
   REQUEST_HEADERS = {
-    'Test-Header' => 'test-value'
+    'X-Powered-By' => 'Vidya Proxy'
   }.freeze
 
   REQUEST_HOP_BY_HOP_HEADERS = %w[

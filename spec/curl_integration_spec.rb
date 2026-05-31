@@ -35,7 +35,7 @@ RSpec.describe 'ForwardProxy curl integration' do
     )
 
     expect(status.exitstatus).to eq(0)
-    expect(stdout).to include('test-header: test-value')
+    expect(stdout).to include('x-powered-by: Vidya Proxy')
   ensure
     ForwardProxy.stop
     upstream&.shutdown

@@ -80,7 +80,7 @@ The proxy generates a self-signed Certificate Authority on first run (cached in 
 1. Trust the CA certificate at `/tmp/forward_proxy_ca/ca.crt` in your system/browser
 2. The proxy generates per-host certificates signed by this CA
 
-An injected `Test-Header: test-value` is added to every forwarded upstream request for observability.
+An injected `X-Powered-By: Vidya Proxy` header is added to every forwarded upstream request for observability.
 
 ## Daemon Management
 

@@ -58,7 +58,7 @@ RSpec.describe HttpForwarder do
 
   it 'appends the new header before sending the request to the upstream server' do
     stub_request(:get, 'http://example.com/path')
-      .with(headers: { 'X-Test' => 'value', 'Test-Header' => 'test-value' })
+      .with(headers: { 'X-Test' => 'value', 'X-Powered-By' => 'Vidya Proxy' })
       .to_return(status: 200, body: 'upstream-ok', headers: { 'Content-Type' => 'text/plain' })
 
     request = HttpRequest.parse('GET http://example.com/path HTTP/1.1')
@@ -89,8 +89,8 @@ RSpec.describe HttpForwarder do
     expect(
       a_request(:get, 'http://example.com/path')
         .with do |req|
-          header_value = req.headers['Test-Header'] || req.headers['test-header']
-          header_value == 'test-value' &&
+          header_value = req.headers['X-Powered-By'] || req.headers['x-powered-by']
+          header_value == 'Vidya Proxy' &&
             !req.headers.key?('proxy-connection') &&
             !req.headers.key?('connection')
         end
@@ -99,7 +99,7 @@ RSpec.describe HttpForwarder do
 
   it 'removes transfer-encoding header when the body is already decoded' do
     stub_request(:get, 'http://example.com/path')
-      .with(headers: { 'X-Test' => 'value', 'Test-Header' => 'test-value' })
+      .with(headers: { 'X-Test' => 'value', 'X-Powered-By' => 'Vidya Proxy' })
       .to_return(status: 200, headers: { 'Content-Type' => 'text/plain',
                                          'Transfer-Encoding' => 'chunked' }, body: 'upstream-ok')
 
@@ -113,7 +113,7 @@ RSpec.describe HttpForwarder do
 
   it 'forwards HTTPS requests with SSL and injects the header' do
     stub_request(:get, 'https://example.com/secure')
-      .with(headers: { 'Test-Header' => 'test-value' })
+      .with(headers: { 'X-Powered-By' => 'Vidya Proxy' })
       .to_return(status: 200, body: 'secure-data', headers: { 'Content-Type' => 'text/plain' })
 
     request = HttpRequest.parse('GET https://example.com/secure HTTP/1.1')
@@ -124,7 +124,7 @@ RSpec.describe HttpForwarder do
     expect(
       a_request(:get, 'https://example.com/secure')
         .with do |req|
-          req.headers['Test-Header'] == 'test-value' || req.headers['test-header'] == 'test-value'
+          req.headers['X-Powered-By'] == 'Vidya Proxy' || req.headers['x-powered-by'] == 'Vidya Proxy'
         end
     ).to have_been_made.once
   end
