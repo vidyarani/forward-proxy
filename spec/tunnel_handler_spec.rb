@@ -1,6 +1,6 @@
 require 'socket'
-require_relative 'lib/tunnel_handler'
-require_relative 'lib/http_request'
+require_relative '../lib/tunnel_handler'
+require_relative '../lib/http_request'
 
 RSpec.describe TunnelHandler do
   it 'responds with 200 and pipes raw bytes between client and origin' do
