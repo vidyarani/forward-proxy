@@ -1,5 +1,5 @@
 require 'socket'
-require_relative 'lib/forward_proxy'
+require_relative '../lib/forward_proxy'
 
 RSpec.describe 'ForwardProxy (TCP listen)' do
   after(:each) { ForwardProxy.stop }
