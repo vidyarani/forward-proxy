@@ -1,7 +1,16 @@
 #!/usr/bin/env ruby
 require_relative '../lib/forward_proxy'
-
+require_relative '../lib/pid_manager'
 require 'optparse'
+
+SUBCOMMANDS = %w[run start stop status restart].freeze
+
+subcommand = ARGV[0]
+if subcommand.nil? || !SUBCOMMANDS.include?(subcommand)
+  subcommand = 'run'
+else
+  ARGV.shift
+end
 
 options = {
   port: (ENV['PORT'] || ForwardProxy::DEFAULT_PORT).to_i,
@@ -10,8 +19,15 @@ options = {
   verify_origin: false
 }
 
-OptionParser.new do |opts|
-  opts.banner = 'Usage: forward-proxy [options]'
+global_parser = OptionParser.new do |opts|
+  opts.banner = "Usage: forward-proxy [subcommand] [options]\n\n" \
+                "Subcommands:\n" \
+                "  run                  Run in foreground (default)\n" \
+                "  start                Start as a daemon (background)\n" \
+                "  stop                 Stop the daemon\n" \
+                "  status               Check if daemon is running\n" \
+                "  restart              Restart the daemon\n\n" \
+                "Options:"
 
   opts.on('-p', '--port PORT', Integer, 'Port to listen on (default: 10000)') do |p|
     options[:port] = p
@@ -33,15 +49,83 @@ OptionParser.new do |opts|
     puts opts
     exit
   end
-end.parse!
-
-ForwardProxy.start(**options)
-
-trap('INT') do
-  puts "\nShutting down forward proxy on port #{ForwardProxy.port}"
-  ForwardProxy.stop
-  exit
 end
 
-puts "Forward proxy listening on #{options[:bind]}:#{ForwardProxy.port}"
-sleep
+global_parser.parse!(ARGV)
+
+case subcommand
+when 'start'
+  if PidManager.running?
+    pid = PidManager.read
+    puts "Forward proxy is already running (PID #{pid})"
+    exit 1
+  end
+
+  Process.daemon(true)
+  PidManager.write
+  $0 = "forward-proxy (port #{options[:port]})"
+  ForwardProxy.start(**options)
+  trap('INT') { ForwardProxy.stop; PidManager.remove; exit }
+  trap('TERM') { ForwardProxy.stop; PidManager.remove; exit }
+  sleep
+
+when 'stop'
+  unless PidManager.running?
+    puts 'Forward proxy is not running'
+    exit 1
+  end
+
+  pid = PidManager.read
+  puts "Stopping forward proxy (PID #{pid})..."
+  Process.kill('INT', pid)
+
+  sleep 0.5
+
+  if PidManager.running?
+    Process.kill('TERM', pid)
+    sleep 0.5
+  end
+
+  PidManager.remove
+  puts 'Stopped'
+
+when 'status'
+  if PidManager.running?
+    pid = PidManager.read
+    puts "Forward proxy is running (PID #{pid})"
+    exit 0
+  else
+    puts 'Forward proxy is not running'
+    exit 1
+  end
+
+when 'restart'
+  if PidManager.running?
+    pid = PidManager.read
+    puts "Stopping forward proxy (PID #{pid})..."
+    Process.kill('INT', pid)
+    sleep 0.5
+    PidManager.remove
+  end
+
+  Process.daemon(true)
+  PidManager.write
+  $0 = "forward-proxy (port #{options[:port]})"
+  ForwardProxy.start(**options)
+  trap('INT') { ForwardProxy.stop; PidManager.remove; exit }
+  trap('TERM') { ForwardProxy.stop; PidManager.remove; exit }
+  puts "Forward proxy started (PID #{PidManager.read})"
+  sleep
+
+when 'run'
+  ForwardProxy.start(**options)
+
+  trap('INT') do
+    puts "\nShutting down forward proxy on port #{ForwardProxy.port}"
+    ForwardProxy.stop
+    exit
+  end
+
+  puts "Forward proxy listening on #{options[:bind]}:#{ForwardProxy.port}"
+  sleep
+end
