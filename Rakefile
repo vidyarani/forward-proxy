@@ -17,9 +17,29 @@ end
 
 task default: :spec
 
-desc 'Start the forward proxy server'
+desc 'Start the forward proxy server in foreground'
 task :server do
-  ruby 'bin/forward-proxy'
+  ruby 'bin/forward-proxy', 'run'
+end
+
+desc 'Start the forward proxy as a daemon'
+task :start do
+  ruby 'bin/forward-proxy', 'start'
+end
+
+desc 'Stop the forward proxy daemon'
+task :stop do
+  ruby 'bin/forward-proxy', 'stop'
+end
+
+desc 'Check forward proxy daemon status'
+task :status do
+  ruby 'bin/forward-proxy', 'status'
+end
+
+desc 'Restart the forward proxy daemon'
+task :restart do
+  ruby 'bin/forward-proxy', 'restart'
 end
 
 desc 'Open an IRB console with the library loaded'
