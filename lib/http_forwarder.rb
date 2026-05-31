@@ -17,12 +17,33 @@ class HttpForwarder
     http.request(upstream_request)
   end
 
+  REQUEST_HEADERS = {
+    'Test-Header' => 'test-value'
+  }.freeze
+
+  REQUEST_HOP_BY_HOP_HEADERS = %w[
+    connection
+    keep-alive
+    proxy-authenticate
+    proxy-authorization
+    proxy-connection
+    te
+    trailer
+    transfer-encoding
+    upgrade
+  ].freeze
+
   def build_upstream_request(request, headers, body)
     klass = Net::HTTP.const_get(request.method.capitalize)
     upstream_request = klass.new(request.path)
 
     headers.each do |name, value|
       next if name.to_s.downcase == 'host'
+      next if REQUEST_HOP_BY_HOP_HEADERS.include?(name.to_s.downcase)
+      upstream_request[name] = value
+    end
+
+    REQUEST_HEADERS.each do |name, value|
       upstream_request[name] = value
     end
 

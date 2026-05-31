@@ -57,9 +57,50 @@ RSpec.describe HttpForwarder do
     expect(client_socket.written).to include('created')
   end
 
+  it 'appends the new header before sending the request to the upstream server' do
+    stub_request(:get, 'http://example.com/path')
+      .with(headers: { 'X-Test' => 'value', 'Test-Header' => 'test-value' })
+      .to_return(status: 200, body: 'upstream-ok', headers: { 'Content-Type' => 'text/plain' })
+
+    request = HttpRequest.parse('GET http://example.com/path HTTP/1.1')
+    forwarder.handle(request, { 'Host' => 'example.com', 'X-Test' => 'value' }, client_socket)
+
+    expect(client_socket.written).to include('HTTP/1.1 200 OK')
+    expect(client_socket.written).to include('upstream-ok')
+  end
+
+  it 'does not forward proxy-specific or hop-by-hop headers to the upstream server' do
+    stub_request(:get, 'http://example.com/path')
+      .to_return(status: 200, body: 'upstream-ok', headers: { 'Content-Type' => 'text/plain' })
+
+    request = HttpRequest.parse('GET http://example.com/path HTTP/1.1')
+    forwarder.handle(
+      request,
+      {
+        'Host' => 'example.com',
+        'X-Test' => 'value',
+        'Proxy-Connection' => 'Keep-Alive',
+        'Connection' => 'Keep-Alive'
+      },
+      client_socket
+    )
+
+    expect(client_socket.written).to include('HTTP/1.1 200 OK')
+    expect(client_socket.written).to include('upstream-ok')
+    expect(
+      a_request(:get, 'http://example.com/path')
+        .with do |req|
+          header_value = req.headers['Test-Header'] || req.headers['test-header']
+          header_value == 'test-value' &&
+            !req.headers.key?('proxy-connection') &&
+            !req.headers.key?('connection')
+        end
+    ).to have_been_made.once
+  end
+
   it 'removes transfer-encoding header when the body is already decoded' do
     stub_request(:get, 'http://example.com/path')
-      .with(headers: { 'X-Test' => 'value' })
+      .with(headers: { 'X-Test' => 'value', 'Test-Header' => 'test-value' })
       .to_return(status: 200, headers: { 'Content-Type' => 'text/plain', 'Transfer-Encoding' => 'chunked' }, body: 'upstream-ok')
 
     request = HttpRequest.parse('GET http://example.com/path HTTP/1.1')

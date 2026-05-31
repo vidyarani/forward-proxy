@@ -20,7 +20,8 @@ RSpec.describe 'ForwardProxy curl integration' do
     upstream_port = upstream.config[:Port]
     upstream.mount_proc '/hello' do |req, res|
       res.status = 200
-      res.body = 'upstream-ok'
+      header_lines = req.header.flat_map { |name, values| values.map { |value| "#{name}: #{value}" } }
+      res.body = header_lines.join("\n")
     end
 
     upstream_thread = Thread.new { upstream.start }
@@ -35,7 +36,7 @@ RSpec.describe 'ForwardProxy curl integration' do
     )
 
     expect(status.exitstatus).to eq(0)
-    expect(stdout.strip).to eq('upstream-ok')
+    expect(stdout).to include('test-header: test-value')
   ensure
     ForwardProxy.stop
     upstream.shutdown if upstream
