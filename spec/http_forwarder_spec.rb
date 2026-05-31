@@ -1,6 +1,5 @@
-require 'webmock/rspec'
-require_relative 'lib/http_forwarder'
-require_relative 'lib/http_request'
+require_relative '../lib/http_forwarder'
+require_relative '../lib/http_request'
 
 class FakeClientSocket
   attr_reader :written
