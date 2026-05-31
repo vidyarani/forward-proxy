@@ -40,8 +40,7 @@ class CertificateAuthority
       @ca_cert = OpenSSL::X509::Certificate.new(File.read(ca_cert_file))
       @ca_key = OpenSSL::PKey.read(File.read(ca_key_file))
     else
-      @ca_key = OpenSSL::PKey::EC.new('prime256v1')
-      @ca_key.generate_key
+      @ca_key = OpenSSL::PKey::EC.generate('prime256v1')
       @ca_cert = create_ca_certificate(@ca_key)
       File.write(ca_cert_file, @ca_cert.to_pem)
       File.write(ca_key_file, @ca_key.to_pem)
@@ -54,7 +53,7 @@ class CertificateAuthority
     cert.serial = 1
     cert.subject = OpenSSL::X509::Name.parse('/C=US/O=ForwardProxy/CN=ForwardProxy-CA')
     cert.issuer = cert.subject
-    cert.public_key = key.public_key
+    cert.public_key = key
     cert.not_before = Time.now
     cert.not_after = Time.now + 365 * 24 * 3600
 
@@ -71,14 +70,13 @@ class CertificateAuthority
   end
 
   def generate_certificate_for(hostname)
-    key = OpenSSL::PKey::EC.new('prime256v1')
-    key.generate_key
+    key = OpenSSL::PKey::EC.generate('prime256v1')
     cert = OpenSSL::X509::Certificate.new
     cert.version = 2
     cert.serial = OpenSSL::BN.rand(64)
     cert.subject = OpenSSL::X509::Name.parse("/C=US/O=ForwardProxy/CN=#{hostname}")
     cert.issuer = @ca_cert.subject
-    cert.public_key = key.public_key
+    cert.public_key = key
     cert.not_before = Time.now
     cert.not_after = Time.now + 365 * 24 * 3600
 
