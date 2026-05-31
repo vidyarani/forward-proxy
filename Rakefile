@@ -15,6 +15,11 @@ namespace :spec do
   end
 end
 
+desc 'Run setup (install deps, create state/cert dirs)'
+task :setup do
+  sh 'bin/setup'
+end
+
 task default: :spec
 
 desc 'Start the forward proxy server in foreground'

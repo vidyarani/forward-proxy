@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+echo "==> Installing gem dependencies..."
+bundle install
+
+echo "==> Creating state directory for PID file..."
+mkdir -p ~/.local/state/forward-proxy
+
+echo "==> Creating certificate cache directory..."
+mkdir -p /tmp/forward_proxy_ca
+
+echo ""
+echo "Setup complete! Run './bin/forward-proxy --help' to get started."
