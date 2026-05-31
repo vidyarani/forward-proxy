@@ -1,4 +1,4 @@
-require_relative 'lib/http_request'
+require_relative '../lib/http_request'
 
 RSpec.describe HttpRequest do
   describe 'parsing a plain HTTP GET request line' do
