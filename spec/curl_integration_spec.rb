@@ -1,7 +1,6 @@
 require 'open3'
 require 'webrick'
-require 'webmock/rspec'
-require_relative 'lib/forward_proxy'
+require_relative '../lib/forward_proxy'
 
 RSpec.describe 'ForwardProxy curl integration' do
   around do |example|
