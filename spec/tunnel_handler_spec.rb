@@ -7,7 +7,7 @@ RSpec.describe TunnelHandler do
     origin_server = TCPServer.new('127.0.0.1', 0)
     origin_port = origin_server.addr[1]
     request = HttpRequest.new(method: 'CONNECT', host: '127.0.0.1', path: nil, version: 'HTTP/1.1', port: origin_port)
-    handler = TunnelHandler.new
+    handler = described_class.new
 
     client_server = TCPServer.new('127.0.0.1', 0)
     client_port = client_server.addr[1]
@@ -32,7 +32,15 @@ RSpec.describe TunnelHandler do
     origin_socket.close
     handler_thread.join
   ensure
-    origin_server.close rescue nil
-    client_server.close rescue nil
+    begin
+      origin_server.close
+    rescue StandardError
+      nil
+    end
+    begin
+      client_server.close
+    rescue StandardError
+      nil
+    end
   end
 end

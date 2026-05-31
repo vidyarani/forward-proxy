@@ -12,7 +12,11 @@ class HttpForwarder
     write_response(client_socket, response)
   rescue StandardError
     client_socket.write("HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
-    client_socket.close rescue nil
+    begin
+      client_socket.close
+    rescue StandardError
+      nil
+    end
   end
 
   private
@@ -20,10 +24,10 @@ class HttpForwarder
   def fetch_upstream(request, headers, body)
     http = Net::HTTP.new(request.host, request.port)
     http.use_ssl = if @explicit_use_ssl.nil?
-                    request.scheme == 'https'
-                  else
-                    @explicit_use_ssl
-                  end
+                     request.scheme == 'https'
+                   else
+                     @explicit_use_ssl
+                   end
     if http.use_ssl?
       http.verify_mode = @verify_origin ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
     end
@@ -55,6 +59,7 @@ class HttpForwarder
     headers.each do |name, value|
       next if name.to_s.downcase == 'host'
       next if REQUEST_HOP_BY_HOP_HEADERS.include?(name.to_s.downcase)
+
       upstream_request[name] = value
     end
 
@@ -105,6 +110,7 @@ class HttpForwarder
     headers = {}
     response.each_header do |name, value|
       next if HOP_BY_HOP_HEADERS.include?(name.downcase)
+
       headers[name.split('-').map(&:capitalize).join('-')] = value
     end
     headers

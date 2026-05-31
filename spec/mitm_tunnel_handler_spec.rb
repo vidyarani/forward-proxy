@@ -43,7 +43,11 @@ RSpec.describe MitmTunnelHandler do
       client_socket.close
       handler_thread.join(1)
     ensure
-      server&.close rescue nil
+      begin
+        server&.close
+      rescue StandardError
+        nil
+      end
     end
 
     it 'accepts TLS connections with a valid certificate for the target host' do
@@ -74,7 +78,11 @@ RSpec.describe MitmTunnelHandler do
       tls_client.close
       handler_thread.join(2)
     ensure
-      server&.close rescue nil
+      begin
+        server&.close
+      rescue StandardError
+        nil
+      end
     end
 
     it 'reads inner HTTP headers from the TLS connection' do
@@ -107,7 +115,11 @@ RSpec.describe MitmTunnelHandler do
       tls_client.close
       handler_thread.join(2)
     ensure
-      server&.close rescue nil
+      begin
+        server&.close
+      rescue StandardError
+        nil
+      end
     end
   end
 
@@ -129,14 +141,22 @@ RSpec.describe MitmTunnelHandler do
       sleep 0.3
 
       response = ''
-      if IO.select([client_socket], nil, nil, 2)
-        response = client_socket.readpartial(4096) rescue ''
+      if client_socket.wait_readable(2)
+        response = begin
+          client_socket.readpartial(4096)
+        rescue StandardError
+          ''
+        end
       end
       expect(response).to include('502 Bad Gateway')
       client_socket.close
       handler_thread.join(1)
     ensure
-      server&.close rescue nil
+      begin
+        server&.close
+      rescue StandardError
+        nil
+      end
     end
   end
 

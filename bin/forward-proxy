@@ -21,13 +21,13 @@ options = {
 
 global_parser = OptionParser.new do |opts|
   opts.banner = "Usage: forward-proxy [subcommand] [options]\n\n" \
-                "Subcommands:\n" \
-                "  run                  Run in foreground (default)\n" \
-                "  start                Start as a daemon (background)\n" \
-                "  stop                 Stop the daemon\n" \
-                "  status               Check if daemon is running\n" \
-                "  restart              Restart the daemon\n\n" \
-                "Options:"
+                "Subcommands:\n  " \
+                "run                  Run in foreground (default)\n  " \
+                "start                Start as a daemon (background)\n  " \
+                "stop                 Stop the daemon\n  " \
+                "status               Check if daemon is running\n  " \
+                "restart              Restart the daemon\n\n" \
+                'Options:'
 
   opts.on('-p', '--port PORT', Integer, 'Port to listen on (default: 10000)') do |p|
     options[:port] = p
@@ -65,8 +65,16 @@ when 'start'
   PidManager.write
   $0 = "forward-proxy (port #{options[:port]})"
   ForwardProxy.start(**options)
-  trap('INT') { ForwardProxy.stop; PidManager.remove; exit }
-  trap('TERM') { ForwardProxy.stop; PidManager.remove; exit }
+  trap('INT') do
+    ForwardProxy.stop
+    PidManager.remove
+    exit
+  end
+  trap('TERM') do
+    ForwardProxy.stop
+    PidManager.remove
+    exit
+  end
   sleep
 
 when 'stop'
@@ -112,8 +120,16 @@ when 'restart'
   PidManager.write
   $0 = "forward-proxy (port #{options[:port]})"
   ForwardProxy.start(**options)
-  trap('INT') { ForwardProxy.stop; PidManager.remove; exit }
-  trap('TERM') { ForwardProxy.stop; PidManager.remove; exit }
+  trap('INT') do
+    ForwardProxy.stop
+    PidManager.remove
+    exit
+  end
+  trap('TERM') do
+    ForwardProxy.stop
+    PidManager.remove
+    exit
+  end
   puts "Forward proxy started (PID #{PidManager.read})"
   sleep
 

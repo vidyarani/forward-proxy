@@ -51,17 +51,15 @@ desc 'Open an IRB console with the library loaded'
 task :console do
   require 'irb'
   lib_dir = File.expand_path('lib', __dir__)
-  Dir["#{lib_dir}/*.rb"].sort.each { |f| require f }
+  Dir["#{lib_dir}/*.rb"].each { |f| require f }
   IRB.start
 end
 
 desc 'Run RuboCop'
 task :lint do
-  begin
-    require 'rubocop'
-    cli = RuboCop::CLI.new
-    cli.run
-  rescue LoadError
-    puts 'RuboCop not installed. Run `gem install rubocop rubocop-rspec` or add to Gemfile.'
-  end
+  require 'rubocop'
+  cli = RuboCop::CLI.new
+  cli.run
+rescue LoadError
+  puts 'RuboCop not installed. Run `gem install rubocop rubocop-rspec` or add to Gemfile.'
 end

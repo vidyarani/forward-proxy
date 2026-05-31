@@ -10,7 +10,7 @@ class MitmTunnelHandler
     @verify_origin = verify_origin
   end
 
-  def handle(request, headers, client_socket)
+  def handle(request, _headers, client_socket)
     client_socket.write("HTTP/1.1 200 Connection Established\r\n\r\n")
     client_socket.flush
 
@@ -22,9 +22,7 @@ class MitmTunnelHandler
     tls_server_ctx.min_version = OpenSSL::SSL::TLS1_2_VERSION
     tls_server_ctx.max_version = OpenSSL::SSL::TLS1_3_VERSION
 
-    if tls_server_ctx.respond_to?(:alpn_protocols=)
-      tls_server_ctx.alpn_protocols = ['http/1.1']
-    end
+    tls_server_ctx.alpn_protocols = ['http/1.1'] if tls_server_ctx.respond_to?(:alpn_protocols=)
 
     if tls_server_ctx.respond_to?(:alpn_select_cb=)
       tls_server_ctx.alpn_select_cb = lambda do |protocols|
@@ -46,10 +44,22 @@ class MitmTunnelHandler
   rescue StandardError => e
     warn "MITM error for #{request.host}: #{e.class}: #{e.message}"
     warn e.backtrace.join("\n")
-    client_socket.write("HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\nConnection: close\r\n\r\n") rescue nil
-    client_socket.close rescue nil
+    begin
+      client_socket.write("HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+    rescue StandardError
+      nil
+    end
+    begin
+      client_socket.close
+    rescue StandardError
+      nil
+    end
   ensure
-    tls_client_socket&.close rescue nil
+    begin
+      tls_client_socket&.close
+    rescue StandardError
+      nil
+    end
   end
 
   private
@@ -58,9 +68,11 @@ class MitmTunnelHandler
     headers = {}
     loop do
       line = socket.readline
-      break if line == "\r\n" || line == "\n"
+      break if ["\r\n", "\n"].include?(line)
+
       name, value = line.chomp.split(':', 2)
       raise ArgumentError, 'invalid header line' unless name && value
+
       headers[name.strip] = value.strip
     end
     headers
@@ -70,6 +82,6 @@ class MitmTunnelHandler
     return nil unless headers['Content-Length']
 
     length = headers['Content-Length'].to_i
-    socket.read(length) if length > 0
+    socket.read(length) if length.positive?
   end
 end

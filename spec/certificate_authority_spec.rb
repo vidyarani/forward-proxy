@@ -4,6 +4,7 @@ require_relative '../lib/certificate_authority'
 
 RSpec.describe CertificateAuthority do
   subject(:ca) { described_class.new(ca_dir: ca_dir) }
+
   let(:ca_dir) { Dir.mktmpdir('ca_spec') }
 
   after do
@@ -99,8 +100,8 @@ RSpec.describe CertificateAuthority do
     end
 
     it 'generates a different certificate for a different hostname' do
-      cert1, _ = ca.certificate_for('alpha.example.com')
-      cert2, _ = ca.certificate_for('beta.example.com')
+      cert1, = ca.certificate_for('alpha.example.com')
+      cert2, = ca.certificate_for('beta.example.com')
       expect(cert1.serial).not_to eq(cert2.serial)
     end
 

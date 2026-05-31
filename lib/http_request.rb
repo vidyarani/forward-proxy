@@ -22,6 +22,7 @@ class HttpRequest
     else
       if target.start_with?('/')
         raise ArgumentError, 'missing Host header for origin-form request' unless host
+
         target = "#{default_scheme}://#{host}#{target}"
       end
       build_standard_request(method, target, version)
@@ -34,21 +35,21 @@ class HttpRequest
     uri = URI(target)
     raise ArgumentError, 'invalid HTTP URI' unless uri.host
 
-      request_path = uri.path.empty? ? '/' : uri.path
-      request_path += "?#{uri.query}" if uri.query
-      request_path += "##{uri.fragment}" if uri.fragment
+    request_path = uri.path.empty? ? '/' : uri.path
+    request_path += "?#{uri.query}" if uri.query
+    request_path += "##{uri.fragment}" if uri.fragment
 
-      port = uri.port || default_port_for_scheme(uri.scheme)
-      scheme = uri.scheme&.downcase || 'http'
-      new(method: method, host: uri.host, path: request_path, version: version, port: port, scheme: scheme)
+    port = uri.port || default_port_for_scheme(uri.scheme)
+    scheme = uri.scheme&.downcase || 'http'
+    new(method: method, host: uri.host, path: request_path, version: version, port: port, scheme: scheme)
   end
 
   def self.build_connect_request(method, target, version)
     host, port_str = target.split(':', 2)
     raise ArgumentError, 'invalid CONNECT target' unless host && port_str
 
-      port = Integer(port_str)
-      new(method: method, host: host, path: nil, version: version, port: port)
+    port = Integer(port_str)
+    new(method: method, host: host, path: nil, version: version, port: port)
   end
 
   def self.default_port_for_scheme(scheme)

@@ -17,13 +17,13 @@ RSpec.describe PidManager do
 
   describe '.write' do
     it 'writes the current process PID to the PID file' do
-      PidManager.write
+      described_class.write
       content = File.read(PidManager::PID_FILE)
       expect(content.strip.to_i).to eq(Process.pid)
     end
 
     it 'creates the state directory' do
-      PidManager.write
+      described_class.write
       expect(Dir.exist?(PidManager::STATE_DIR)).to be true
     end
   end
@@ -31,39 +31,39 @@ RSpec.describe PidManager do
   describe '.read' do
     it 'returns the PID from the file' do
       File.write(PidManager::PID_FILE, '12345')
-      expect(PidManager.read).to eq(12345)
+      expect(described_class.read).to eq(12_345)
     end
 
     it 'returns nil when no PID file exists' do
-      expect(PidManager.read).to be_nil
+      expect(described_class.read).to be_nil
     end
   end
 
   describe '.running?' do
     it 'returns true when the PID is alive' do
       File.write(PidManager::PID_FILE, Process.pid.to_s)
-      expect(PidManager.running?).to be true
+      expect(described_class.running?).to be true
     end
 
     it 'returns false when the PID file does not exist' do
-      expect(PidManager.running?).to be false
+      expect(described_class.running?).to be false
     end
 
     it 'returns false when the PID is not alive' do
       File.write(PidManager::PID_FILE, '999999')
-      expect(PidManager.running?).to be false
+      expect(described_class.running?).to be false
     end
   end
 
   describe '.remove' do
     it 'deletes the PID file' do
       File.write(PidManager::PID_FILE, '12345')
-      PidManager.remove
+      described_class.remove
       expect(File.exist?(PidManager::PID_FILE)).to be false
     end
 
     it 'does not raise when no PID file exists' do
-      expect { PidManager.remove }.not_to raise_error
+      expect { described_class.remove }.not_to raise_error
     end
   end
 end

@@ -2,11 +2,11 @@ require 'socket'
 require_relative '../lib/forward_proxy'
 
 RSpec.describe 'ForwardProxy (TCP listen)' do
-  after(:each) { ForwardProxy.stop }
+  after { ForwardProxy.stop }
 
   it 'uses the default port 10000 when started without arguments' do
     ForwardProxy.start
-    expect(ForwardProxy.port).to eq(10000)
+    expect(ForwardProxy.port).to eq(10_000)
   end
 
   it 'allows a TCPSocket client to connect' do
@@ -40,9 +40,9 @@ RSpec.describe 'ForwardProxy (TCP listen)' do
     port = ForwardProxy.port
     ForwardProxy.stop
 
-    expect {
+    expect do
       TCPSocket.new('127.0.0.1', port)
-    }.to raise_error(Errno::ECONNREFUSED)
+    end.to raise_error(Errno::ECONNREFUSED)
   end
 
   it 'does not raise when stop is called twice' do

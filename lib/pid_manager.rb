@@ -11,8 +11,9 @@ module PidManager
 
   def self.read
     return nil unless File.exist?(PID_FILE)
+
     File.read(PID_FILE).strip.to_i
-  rescue
+  rescue StandardError
     nil
   end
 
@@ -27,8 +28,8 @@ module PidManager
   end
 
   def self.remove
-    File.delete(PID_FILE) if File.exist?(PID_FILE)
-  rescue
+    FileUtils.rm_f(PID_FILE)
+  rescue StandardError
     nil
   end
 

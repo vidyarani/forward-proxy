@@ -14,29 +14,27 @@ require_relative 'http_request'
 # implementations, which keeps it fully unit-testable without a real network.
 class RequestRouter
   def self.route(socket, http_handler:, tunnel_handler:)
-    begin
-      request_line = socket.readline.chomp
-      request = HttpRequest.parse(request_line)
+    request_line = socket.readline.chomp
+    request = HttpRequest.parse(request_line)
 
-      headers = {}
-      loop do
-        line = socket.readline
-        break if line == "\r\n" || line == "\n"
+    headers = {}
+    loop do
+      line = socket.readline
+      break if ["\r\n", "\n"].include?(line)
 
-        name, value = line.chomp.split(':', 2)
-        raise ArgumentError, 'invalid header line' unless name && value
+      name, value = line.chomp.split(':', 2)
+      raise ArgumentError, 'invalid header line' unless name && value
 
-        headers[name.strip] = value.strip
-      end
-
-      if request.method == 'CONNECT'
-        tunnel_handler.handle(request, headers, socket)
-      else
-        http_handler.handle(request, headers, socket)
-      end
-    rescue StandardError
-      socket.write("HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
-      socket.close
+      headers[name.strip] = value.strip
     end
+
+    if request.method == 'CONNECT'
+      tunnel_handler.handle(request, headers, socket)
+    else
+      http_handler.handle(request, headers, socket)
+    end
+  rescue StandardError
+    socket.write("HTTP/1.1 400 Bad Request\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+    socket.close
   end
 end

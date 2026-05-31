@@ -13,7 +13,7 @@ RSpec.describe 'ForwardProxy curl integration' do
   it 'forwards a real curl request through the proxy to an upstream server' do
     upstream = WEBrick::HTTPServer.new(
       Port: 0,
-      Logger: WEBrick::Log.new('/dev/null'),
+      Logger: WEBrick::Log.new(File::NULL),
       AccessLog: []
     )
     upstream_port = upstream.config[:Port]
@@ -24,10 +24,10 @@ RSpec.describe 'ForwardProxy curl integration' do
     end
 
     upstream_thread = Thread.new { upstream.start }
-    proxy_port = 10001
+    proxy_port = 10_001
     ForwardProxy.start(port: proxy_port)
 
-    stdout, stderr, status = Open3.capture3(
+    stdout, _, status = Open3.capture3(
       'curl',
       '-s',
       '-x', "http://127.0.0.1:#{proxy_port}",
@@ -38,7 +38,7 @@ RSpec.describe 'ForwardProxy curl integration' do
     expect(stdout).to include('test-header: test-value')
   ensure
     ForwardProxy.stop
-    upstream.shutdown if upstream
-    upstream_thread.join if upstream_thread
+    upstream&.shutdown
+    upstream_thread&.join
   end
 end

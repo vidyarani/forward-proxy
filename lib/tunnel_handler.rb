@@ -1,15 +1,23 @@
 require 'socket'
 
 class TunnelHandler
-  def handle(request, headers, client_socket)
+  def handle(request, _headers, client_socket)
     origin_socket = TCPSocket.new(request.host, request.port)
     client_socket.write("HTTP/1.1 200 Connection Established\r\n\r\n")
     pipe_bidirectionally(client_socket, origin_socket)
   rescue StandardError
     client_socket.write("HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
-    client_socket.close rescue nil
+    begin
+      client_socket.close
+    rescue StandardError
+      nil
+    end
   ensure
-    origin_socket.close rescue nil
+    begin
+      origin_socket.close
+    rescue StandardError
+      nil
+    end
   end
 
   private
@@ -26,7 +34,11 @@ class TunnelHandler
       data = source.readpartial(4096)
       destination.write(data)
     end
-  rescue EOFError, IOError
-    destination.close rescue nil
+  rescue IOError
+    begin
+      destination.close
+    rescue StandardError
+      nil
+    end
   end
 end

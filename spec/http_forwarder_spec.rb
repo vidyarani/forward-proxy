@@ -25,7 +25,7 @@ end
 
 RSpec.describe HttpForwarder do
   let(:client_socket) { FakeClientSocket.new }
-  let(:forwarder) { HttpForwarder.new }
+  let(:forwarder) { described_class.new }
 
   it 'forwards GET requests through Net::HTTP and writes the upstream response' do
     stub_request(:get, 'http://example.com/path')
@@ -100,7 +100,8 @@ RSpec.describe HttpForwarder do
   it 'removes transfer-encoding header when the body is already decoded' do
     stub_request(:get, 'http://example.com/path')
       .with(headers: { 'X-Test' => 'value', 'Test-Header' => 'test-value' })
-      .to_return(status: 200, headers: { 'Content-Type' => 'text/plain', 'Transfer-Encoding' => 'chunked' }, body: 'upstream-ok')
+      .to_return(status: 200, headers: { 'Content-Type' => 'text/plain',
+                                         'Transfer-Encoding' => 'chunked' }, body: 'upstream-ok')
 
     request = HttpRequest.parse('GET http://example.com/path HTTP/1.1')
     forwarder.handle(request, { 'Host' => 'example.com', 'X-Test' => 'value' }, client_socket)

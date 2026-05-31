@@ -55,7 +55,7 @@ class CertificateAuthority
     cert.issuer = cert.subject
     cert.public_key = key
     cert.not_before = Time.now
-    cert.not_after = Time.now + 365 * 24 * 3600
+    cert.not_after = Time.now + (365 * 24 * 3600)
 
     extension_factory = OpenSSL::X509::ExtensionFactory.new
     extension_factory.subject_certificate = cert
@@ -65,7 +65,7 @@ class CertificateAuthority
       extension_factory.create_extension('keyUsage', 'keyCertSign,cRLSign', true)
     ].each { |ext| cert.add_extension(ext) }
 
-    cert.sign(key, OpenSSL::Digest::SHA256.new)
+    cert.sign(key, OpenSSL::Digest.new('SHA256'))
     cert
   end
 
@@ -78,7 +78,7 @@ class CertificateAuthority
     cert.issuer = @ca_cert.subject
     cert.public_key = key
     cert.not_before = Time.now
-    cert.not_after = Time.now + 365 * 24 * 3600
+    cert.not_after = Time.now + (365 * 24 * 3600)
 
     extension_factory = OpenSSL::X509::ExtensionFactory.new
     extension_factory.subject_certificate = cert
@@ -89,8 +89,7 @@ class CertificateAuthority
       extension_factory.create_extension('extendedKeyUsage', 'serverAuth', false)
     ].each { |ext| cert.add_extension(ext) }
 
-    cert.sign(@ca_key, OpenSSL::Digest::SHA256.new)
+    cert.sign(@ca_key, OpenSSL::Digest.new('SHA256'))
     [cert, key]
   end
 end
-

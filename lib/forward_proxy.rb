@@ -5,7 +5,7 @@ require_relative 'tunnel_handler'
 require_relative 'mitm_tunnel_handler'
 
 module ForwardProxy
-  DEFAULT_PORT = 10000
+  DEFAULT_PORT = 10_000
 
   def self.start(port: DEFAULT_PORT, bind: '127.0.0.1', enable_mitm: false, verify_origin: false)
     return if @server && @thread&.alive?
@@ -13,25 +13,25 @@ module ForwardProxy
     @port = port
     @bind = bind
     @server = TCPServer.new(@bind, @port)
-    
+
     tunnel_handler = enable_mitm ? MitmTunnelHandler.new(verify_origin: verify_origin) : TunnelHandler.new
-    
+
     @thread = Thread.new do
-      begin
-        loop do
-          client = @server.accept
-          Thread.new(client) do |sock|
-            begin
-              RequestRouter.route(sock, http_handler: HttpForwarder.new, tunnel_handler: tunnel_handler)
-            rescue StandardError
-            ensure
-              sock.close rescue nil
-            end
+      loop do
+        client = @server.accept
+        Thread.new(client) do |sock|
+          RequestRouter.route(sock, http_handler: HttpForwarder.new, tunnel_handler: tunnel_handler)
+        rescue StandardError
+        ensure
+          begin
+            sock.close
+          rescue StandardError
+            nil
           end
         end
-      rescue StandardError
-        # server closed or thread interrupted, exit cleanly
       end
+    rescue StandardError
+      # server closed or thread interrupted, exit cleanly
     end
 
     sleep 0.05
@@ -42,15 +42,16 @@ module ForwardProxy
   end
 
   def self.stop
-    if @server
-      @server.close rescue nil
-      if @thread&.alive?
-        @thread.join(1)
-      end
-      @server = nil
-      @thread = nil
-      @port = nil
+    return unless @server
+
+    begin
+      @server.close
+    rescue StandardError
+      nil
     end
+    @thread.join(1) if @thread&.alive?
+    @server = nil
+    @thread = nil
+    @port = nil
   end
 end
-

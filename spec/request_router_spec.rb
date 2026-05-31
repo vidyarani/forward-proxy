@@ -12,9 +12,10 @@ class FakeSocket
     @closed = false
   end
 
-  def readline(*args)
+  def readline(*)
     raise EOFError if @closed
-    line = @io.readline(*args)
+
+    line = @io.readline(*)
     @read_lines << line
     line
   end
@@ -49,7 +50,7 @@ RSpec.describe RequestRouter do
       http_handler = FakeHandler.new
       tunnel_handler = FakeHandler.new
 
-      RequestRouter.route(socket, http_handler: http_handler, tunnel_handler: tunnel_handler)
+      described_class.route(socket, http_handler: http_handler, tunnel_handler: tunnel_handler)
 
       expect(http_handler.called_with).not_to be_nil
       expect(http_handler.called_with.first.method).to eq('GET')
@@ -63,7 +64,7 @@ RSpec.describe RequestRouter do
       http_handler = FakeHandler.new
       tunnel_handler = FakeHandler.new
 
-      RequestRouter.route(socket, http_handler: http_handler, tunnel_handler: tunnel_handler)
+      described_class.route(socket, http_handler: http_handler, tunnel_handler: tunnel_handler)
 
       expect(http_handler.called_with.first.method).to eq('POST')
       expect(http_handler.called_with.first.path).to eq('/form')
@@ -77,7 +78,7 @@ RSpec.describe RequestRouter do
       http_handler = FakeHandler.new
       tunnel_handler = FakeHandler.new
 
-      RequestRouter.route(socket, http_handler: http_handler, tunnel_handler: tunnel_handler)
+      described_class.route(socket, http_handler: http_handler, tunnel_handler: tunnel_handler)
 
       expect(tunnel_handler.called_with).not_to be_nil
       expect(tunnel_handler.called_with.first.method).to eq('CONNECT')
@@ -96,7 +97,7 @@ RSpec.describe RequestRouter do
       http_handler = FakeHandler.new
       tunnel_handler = FakeHandler.new
 
-      RequestRouter.route(socket, http_handler: http_handler, tunnel_handler: tunnel_handler)
+      described_class.route(socket, http_handler: http_handler, tunnel_handler: tunnel_handler)
 
       expect(http_handler.called_with).not_to be_nil
       expect(http_handler.header_reads).to include("Host: example.com\r\n", "X-Test: header-value\r\n")
@@ -110,7 +111,7 @@ RSpec.describe RequestRouter do
       http_handler = FakeHandler.new
       tunnel_handler = FakeHandler.new
 
-      RequestRouter.route(socket, http_handler: http_handler, tunnel_handler: tunnel_handler)
+      described_class.route(socket, http_handler: http_handler, tunnel_handler: tunnel_handler)
 
       expect(socket.written).to include('HTTP/1.1 400 Bad Request')
       expect(socket).to be_closed
@@ -123,7 +124,7 @@ RSpec.describe RequestRouter do
       http_handler = FakeHandler.new
       tunnel_handler = FakeHandler.new
 
-      RequestRouter.route(socket, http_handler: http_handler, tunnel_handler: tunnel_handler)
+      described_class.route(socket, http_handler: http_handler, tunnel_handler: tunnel_handler)
 
       expect(socket.written).to include('HTTP/1.1 400 Bad Request')
       expect(socket).to be_closed

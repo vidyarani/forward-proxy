@@ -2,7 +2,7 @@ require_relative '../lib/http_request'
 
 RSpec.describe HttpRequest do
   describe 'parsing a plain HTTP GET request line' do
-    let(:request) { HttpRequest.parse('GET http://example.com/path/to/resource HTTP/1.1') }
+    let(:request) { described_class.parse('GET http://example.com/path/to/resource HTTP/1.1') }
 
     it 'extracts the method' do
       expect(request.method).to eq('GET')
@@ -22,7 +22,7 @@ RSpec.describe HttpRequest do
   end
 
   describe 'default port handling for plain HTTP URIs' do
-    let(:request) { HttpRequest.parse('GET http://example.com/path HTTP/1.1') }
+    let(:request) { described_class.parse('GET http://example.com/path HTTP/1.1') }
 
     it 'defaults the port to 80' do
       expect(request.port).to eq(80)
@@ -30,7 +30,7 @@ RSpec.describe HttpRequest do
   end
 
   describe 'parsing a CONNECT request line' do
-    let(:request) { HttpRequest.parse('CONNECT example.com:443 HTTP/1.1') }
+    let(:request) { described_class.parse('CONNECT example.com:443 HTTP/1.1') }
 
     it 'extracts method as CONNECT' do
       expect(request.method).to eq('CONNECT')
@@ -47,7 +47,7 @@ RSpec.describe HttpRequest do
   end
 
   describe 'value object immutability' do
-    let(:request) { HttpRequest.parse('GET http://example.com/path HTTP/1.1') }
+    let(:request) { described_class.parse('GET http://example.com/path HTTP/1.1') }
 
     it 'is frozen after parsing' do
       expect(request).to be_frozen
@@ -59,7 +59,7 @@ RSpec.describe HttpRequest do
   end
 
   describe 'parsing a POST request line' do
-    let(:request) { HttpRequest.parse('POST http://example.com/form HTTP/1.1') }
+    let(:request) { described_class.parse('POST http://example.com/form HTTP/1.1') }
 
     it 'extracts method as POST' do
       expect(request.method).to eq('POST')
@@ -71,7 +71,7 @@ RSpec.describe HttpRequest do
   end
 
   describe 'parsing an HTTPS request line' do
-    let(:request) { HttpRequest.parse('GET https://example.com/secure HTTP/1.1') }
+    let(:request) { described_class.parse('GET https://example.com/secure HTTP/1.1') }
 
     it 'extracts the scheme as https' do
       expect(request.scheme).to eq('https')
@@ -87,7 +87,7 @@ RSpec.describe HttpRequest do
   end
 
   describe 'parsing an origin-form request line with Host header' do
-    let(:request) { HttpRequest.parse('GET /secure HTTP/1.1', host: 'example.com', default_scheme: 'https') }
+    let(:request) { described_class.parse('GET /secure HTTP/1.1', host: 'example.com', default_scheme: 'https') }
 
     it 'extracts the scheme as https' do
       expect(request.scheme).to eq('https')
