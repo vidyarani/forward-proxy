@@ -110,4 +110,22 @@ RSpec.describe HttpForwarder do
     expect(client_socket.written).to include('Content-Length: 11')
     expect(client_socket.written).not_to include('Transfer-Encoding: chunked')
   end
+
+  it 'forwards HTTPS requests with SSL and injects the header' do
+    stub_request(:get, 'https://example.com/secure')
+      .with(headers: { 'Test-Header' => 'test-value' })
+      .to_return(status: 200, body: 'secure-data', headers: { 'Content-Type' => 'text/plain' })
+
+    request = HttpRequest.parse('GET https://example.com/secure HTTP/1.1')
+    forwarder.handle(request, { 'Host' => 'example.com' }, client_socket)
+
+    expect(client_socket.written).to include('HTTP/1.1 200 OK')
+    expect(client_socket.written).to include('secure-data')
+    expect(
+      a_request(:get, 'https://example.com/secure')
+        .with do |req|
+          req.headers['Test-Header'] == 'test-value' || req.headers['test-header'] == 'test-value'
+        end
+    ).to have_been_made.once
+  end
 end

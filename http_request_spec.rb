@@ -69,4 +69,36 @@ RSpec.describe HttpRequest do
       expect(request.path).to eq('/form')
     end
   end
+
+  describe 'parsing an HTTPS request line' do
+    let(:request) { HttpRequest.parse('GET https://example.com/secure HTTP/1.1') }
+
+    it 'extracts the scheme as https' do
+      expect(request.scheme).to eq('https')
+    end
+
+    it 'defaults the port to 443 for HTTPS' do
+      expect(request.port).to eq(443)
+    end
+
+    it 'extracts the host' do
+      expect(request.host).to eq('example.com')
+    end
+  end
+
+  describe 'parsing an origin-form request line with Host header' do
+    let(:request) { HttpRequest.parse('GET /secure HTTP/1.1', host: 'example.com', default_scheme: 'https') }
+
+    it 'extracts the scheme as https' do
+      expect(request.scheme).to eq('https')
+    end
+
+    it 'extracts the host from Host header' do
+      expect(request.host).to eq('example.com')
+    end
+
+    it 'extracts the path from origin-form request' do
+      expect(request.path).to eq('/secure')
+    end
+  end
 end

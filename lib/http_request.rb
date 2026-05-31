@@ -1,25 +1,30 @@
 require 'uri'
 
 class HttpRequest
-  attr_reader :method, :host, :path, :version, :port
+  attr_reader :method, :host, :path, :version, :port, :scheme
 
-  def initialize(method:, host:, path:, version:, port:)
+  def initialize(method:, host:, path:, version:, port:, scheme: 'http')
     @method = method
     @host = host
     @path = path
     @version = version
     @port = port
+    @scheme = scheme
     freeze
   end
 
-  def self.parse(request_line)
+  def self.parse(request_line, host: nil, default_scheme: 'http')
     method, target, version = request_line.strip.split(' ', 3)
     raise ArgumentError, 'invalid request line' unless method && target && version
 
     if method == 'CONNECT'
-     build_connect_request(method, target, version)
+      build_connect_request(method, target, version)
     else
-     build_standard_request(method, target, version)
+      if target.start_with?('/')
+        raise ArgumentError, 'missing Host header for origin-form request' unless host
+        target = "#{default_scheme}://#{host}#{target}"
+      end
+      build_standard_request(method, target, version)
     end
   rescue URI::InvalidURIError
     raise ArgumentError, 'invalid request line'
@@ -34,7 +39,8 @@ class HttpRequest
       request_path += "##{uri.fragment}" if uri.fragment
 
       port = uri.port || default_port_for_scheme(uri.scheme)
-      new(method: method, host: uri.host, path: request_path, version: version, port: port)
+      scheme = uri.scheme&.downcase || 'http'
+      new(method: method, host: uri.host, path: request_path, version: version, port: port, scheme: scheme)
   end
 
   def self.build_connect_request(method, target, version)

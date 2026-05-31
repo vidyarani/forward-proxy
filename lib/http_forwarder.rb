@@ -1,6 +1,12 @@
 require 'net/http'
+require 'openssl'
 
 class HttpForwarder
+  def initialize(use_ssl: nil, verify_origin: true)
+    @explicit_use_ssl = use_ssl
+    @verify_origin = verify_origin
+  end
+
   def handle(request, headers, client_socket, body = nil)
     response = fetch_upstream(request, headers, body)
     write_response(client_socket, response)
@@ -13,6 +19,15 @@ class HttpForwarder
 
   def fetch_upstream(request, headers, body)
     http = Net::HTTP.new(request.host, request.port)
+    http.use_ssl = if @explicit_use_ssl.nil?
+                    request.scheme == 'https'
+                  else
+                    @explicit_use_ssl
+                  end
+    if http.use_ssl?
+      http.verify_mode = @verify_origin ? OpenSSL::SSL::VERIFY_PEER : OpenSSL::SSL::VERIFY_NONE
+    end
+
     upstream_request = build_upstream_request(request, headers, body)
     http.request(upstream_request)
   end
