@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-require_relative 'lib/forward_proxy'
+require_relative '../lib/forward_proxy'
 
 port = (ARGV[0] || ENV['PORT'] || ForwardProxy::DEFAULT_PORT).to_i
 ForwardProxy.start(port: port)

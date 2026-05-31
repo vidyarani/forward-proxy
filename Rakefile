@@ -19,7 +19,7 @@ task default: :spec
 
 desc 'Start the forward proxy server'
 task :server do
-  ruby 'start_proxy.rb'
+  ruby 'bin/forward-proxy'
 end
 
 desc 'Open an IRB console with the library loaded'
