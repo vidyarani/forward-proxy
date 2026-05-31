@@ -1,8 +1,41 @@
 #!/usr/bin/env ruby
 require_relative '../lib/forward_proxy'
 
-port = (ARGV[0] || ENV['PORT'] || ForwardProxy::DEFAULT_PORT).to_i
-ForwardProxy.start(port: port)
+require 'optparse'
+
+options = {
+  port: (ENV['PORT'] || ForwardProxy::DEFAULT_PORT).to_i,
+  bind: '127.0.0.1',
+  enable_mitm: false,
+  verify_origin: false
+}
+
+OptionParser.new do |opts|
+  opts.banner = 'Usage: forward-proxy [options]'
+
+  opts.on('-p', '--port PORT', Integer, 'Port to listen on (default: 10000)') do |p|
+    options[:port] = p
+  end
+
+  opts.on('-b', '--bind ADDR', String, 'Address to bind to (default: 127.0.0.1)') do |b|
+    options[:bind] = b
+  end
+
+  opts.on('-m', '--mitm', 'Enable MITM TLS interception') do
+    options[:enable_mitm] = true
+  end
+
+  opts.on('--verify-origin', 'Verify origin TLS certificates in MITM mode') do
+    options[:verify_origin] = true
+  end
+
+  opts.on('-h', '--help', 'Show this help') do
+    puts opts
+    exit
+  end
+end.parse!
+
+ForwardProxy.start(**options)
 
 trap('INT') do
   puts "\nShutting down forward proxy on port #{ForwardProxy.port}"
@@ -10,5 +43,5 @@ trap('INT') do
   exit
 end
 
-puts "Forward proxy listening on 127.0.0.1:#{ForwardProxy.port}"
+puts "Forward proxy listening on #{options[:bind]}:#{ForwardProxy.port}"
 sleep

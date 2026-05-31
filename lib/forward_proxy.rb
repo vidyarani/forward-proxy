@@ -7,11 +7,12 @@ require_relative 'mitm_tunnel_handler'
 module ForwardProxy
   DEFAULT_PORT = 10000
 
-  def self.start(port: DEFAULT_PORT, enable_mitm: false, verify_origin: false)
+  def self.start(port: DEFAULT_PORT, bind: '127.0.0.1', enable_mitm: false, verify_origin: false)
     return if @server && @thread&.alive?
 
     @port = port
-    @server = TCPServer.new('127.0.0.1', @port)
+    @bind = bind
+    @server = TCPServer.new(@bind, @port)
     
     tunnel_handler = enable_mitm ? MitmTunnelHandler.new(verify_origin: verify_origin) : TunnelHandler.new
     
