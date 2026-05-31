@@ -55,6 +55,29 @@ task :console do
   IRB.start
 end
 
+namespace :cert do
+  desc 'Install the root CA certificate into the system trust store'
+  task :install do
+    ca_cert = File.expand_path('certs/ca.crt', __dir__)
+    abort 'CA certificate not found. Run `bin/setup` first.' unless File.exist?(ca_cert)
+
+    case RbConfig::CONFIG['host_os']
+    when /darwin/
+      puts 'Installing CA into macOS keychain...'
+      system 'security', 'add-trusted-cert', '-d', '-r', 'trustRoot',
+             '-k', '/Library/Keychains/System.keychain', ca_cert
+    when /linux/
+      dest = '/usr/local/share/ca-certificates/forward-proxy.crt'
+      puts "Copying CA to #{dest}..."
+      system 'sudo', 'cp', ca_cert, dest
+      system 'sudo', 'update-ca-certificates'
+    else
+      puts "Unsupported OS: #{RbConfig::CONFIG['host_os']}"
+      puts "Manually trust: #{ca_cert}"
+    end
+  end
+end
+
 desc 'Run RuboCop'
 task :lint do
   require 'rubocop'

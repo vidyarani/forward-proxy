@@ -12,8 +12,44 @@ bundle install
 echo "==> Creating state directory for PID file..."
 mkdir -p ~/.local/state/forward-proxy
 
-echo "==> Creating certificate cache directory..."
-mkdir -p /tmp/forward_proxy_ca
+echo "==> Generating root Certificate Authority..."
+ruby <<'RUBY'
+ca_key_file = "certs/ca.key"
+ca_crt_file = "certs/ca.crt"
+
+if File.exist?(ca_crt_file) && File.exist?(ca_key_file)
+  puts "   Root CA already exists, skipping."
+else
+  require "openssl"
+  require "fileutils"
+  FileUtils.mkdir_p("certs")
+
+  key = OpenSSL::PKey::EC.generate("prime256v1")
+  cert = OpenSSL::X509::Certificate.new
+  cert.version = 2
+  cert.serial = 1
+  subject = OpenSSL::X509::Name.parse("/CN=vidya proxy server")
+  cert.subject = subject
+  cert.issuer = subject
+  cert.public_key = key
+  cert.not_before = Time.utc(2026, 1, 1)
+  cert.not_after = Time.utc(2046, 1, 1)
+
+  ef = OpenSSL::X509::ExtensionFactory.new
+  ef.subject_certificate = cert
+  ef.issuer_certificate = cert
+  [
+    ef.create_extension("basicConstraints", "CA:TRUE", true),
+    ef.create_extension("keyUsage", "keyCertSign,cRLSign", true)
+  ].each { |ext| cert.add_extension(ext) }
+
+  cert.sign(key, OpenSSL::Digest.new("SHA256"))
+
+  File.write(ca_key_file, key.to_pem)
+  File.write(ca_crt_file, cert.to_pem)
+  puts "   Root CA generated in certs/"
+end
+RUBY
 
 echo ""
-echo "Setup complete! Run './bin/forward-proxy --help' to get started."
+echo "Setup complete! Run '\''./bin/forward-proxy --help'\'' to get started."

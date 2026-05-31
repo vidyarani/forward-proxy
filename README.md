@@ -75,10 +75,10 @@ MITM (Man-In-The-Middle) mode decrypts HTTPS traffic for inspection:
 bin/forward-proxy --mitm
 ```
 
-The proxy generates a self-signed Certificate Authority on first run (cached in `/tmp/forward_proxy_ca/`). To avoid certificate warnings:
+The proxy uses a Certificate Authority stored in `certs/`. Run `bin/setup` to generate one. To avoid certificate warnings:
 
-1. Trust the CA certificate at `/tmp/forward_proxy_ca/ca.crt` in your system/browser
-2. The proxy generates per-host certificates signed by this CA
+1. Trust `certs/ca.crt` in your system/browser
+2. Per-host certificates are generated dynamically for each domain (stored in `certs/<domain>.{crt,key}`), signed by this CA
 
 An injected `X-Powered-By: Vidya Proxy` header is added to every forwarded upstream request for observability.
 
@@ -96,7 +96,7 @@ bin/forward-proxy restart
 ## Rake Tasks
 
 ```bash
-rake setup              # Install deps, create state/cert directories
+rake setup              # Install deps, create state directory, generate root CA
 rake spec               # Run all tests
 rake spec:unit          # Run unit tests only
 rake spec:integration   # Run integration tests (requires curl)
@@ -106,6 +106,7 @@ rake stop               # Stop daemon
 rake status             # Check daemon status
 rake restart            # Restart daemon
 rake console            # Open IRB with library loaded
+rake cert:install       # Install root CA into system trust store
 rake lint               # Run RuboCop (if installed)
 ```
 
@@ -133,7 +134,7 @@ lib/
 ├── http_forwarder.rb      Forwards GET/POST/etc. via Net::HTTP
 ├── tunnel_handler.rb      Standard CONNECT tunnel (TCP pipe)
 ├── mitm_tunnel_handler.rb MITM CONNECT tunnel (TLS interception)
-├── certificate_authority.rb Dynamic CA + per-host cert generation
+├── certificate_authority.rb Static CA loaded from certs/ + per-host certs on demand
 └── pid_manager.rb         PID file management for daemon mode
 ```
 

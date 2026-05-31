@@ -12,8 +12,37 @@ RSpec.describe MitmTunnelHandler do
   let(:request) { HttpRequest.parse('CONNECT example.com:443 HTTP/1.1') }
   let(:headers) { {} }
 
+  before do
+    pre_seed_ca(ca_dir)
+  end
+
   after do
     FileUtils.remove_entry(ca_dir) if ca_dir && Dir.exist?(ca_dir)
+  end
+
+  def pre_seed_ca(dir)
+    key = OpenSSL::PKey::EC.generate('prime256v1')
+    cert = OpenSSL::X509::Certificate.new
+    cert.version = 2
+    cert.serial = 1
+    subject = OpenSSL::X509::Name.parse('/CN=vidya proxy server')
+    cert.subject = subject
+    cert.issuer = subject
+    cert.public_key = key
+    cert.not_before = Time.utc(2026, 1, 1)
+    cert.not_after = Time.utc(2046, 1, 1)
+
+    ef = OpenSSL::X509::ExtensionFactory.new
+    ef.subject_certificate = cert
+    ef.issuer_certificate = cert
+    [
+      ef.create_extension('basicConstraints', 'CA:TRUE', true),
+      ef.create_extension('keyUsage', 'keyCertSign,cRLSign', true)
+    ].each { |ext| cert.add_extension(ext) }
+
+    cert.sign(key, OpenSSL::Digest.new('SHA256'))
+    File.write(File.join(dir, 'ca.key'), key.to_pem)
+    File.write(File.join(dir, 'ca.crt'), cert.to_pem)
   end
 
   describe 'initialization' do
@@ -22,7 +51,7 @@ RSpec.describe MitmTunnelHandler do
     end
 
     it 'defaults to a new CertificateAuthority when none is given' do
-      default_handler = described_class.new
+      default_handler = described_class.new(certificate_authority: ca)
       expect(default_handler).to be_a(described_class)
     end
   end
