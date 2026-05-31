@@ -1,6 +1,6 @@
 require 'stringio'
-require_relative 'lib/http_request'
-require_relative 'lib/request_router'
+require_relative '../lib/http_request'
+require_relative '../lib/request_router'
 
 class FakeSocket
   attr_reader :read_lines, :written
