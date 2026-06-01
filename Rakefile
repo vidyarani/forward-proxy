@@ -63,8 +63,8 @@ namespace :cert do
 
     case RbConfig::CONFIG['host_os']
     when /darwin/
-      puts 'Installing CA into macOS keychain...'
-      system 'security', 'add-trusted-cert', '-d', '-r', 'trustRoot',
+      puts 'Installing CA into macOS keychain... (sudo required)'
+      system 'sudo', 'security', 'add-trusted-cert', '-d', '-r', 'trustRoot',
              '-k', '/Library/Keychains/System.keychain', ca_cert
     when /linux/
       dest = '/usr/local/share/ca-certificates/forward-proxy.crt'
