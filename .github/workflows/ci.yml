@@ -20,6 +20,8 @@ jobs:
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
+      - name: Generate CA certificates
+        run: bin/setup
       - name: Run RuboCop
         run: bundle exec rubocop
       - name: Run tests

@@ -51,7 +51,7 @@ RSpec.describe MitmTunnelHandler do
     end
 
     it 'defaults to a new CertificateAuthority when none is given' do
-      default_handler = described_class.new(certificate_authority: ca)
+      default_handler = described_class.new
       expect(default_handler).to be_a(described_class)
     end
   end
