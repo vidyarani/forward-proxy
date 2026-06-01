@@ -7,7 +7,7 @@ class CertificateAuthority
   attr_reader :ca_cert, :ca_key
 
   def initialize(ca_dir: nil)
-    @ca_dir = ca_dir || File.expand_path('../../certs', __dir__)
+    @ca_dir = ca_dir || File.expand_path('../certs', __dir__)
     @cert_cache = {}
     @serial_counter = 1
     load_ca
