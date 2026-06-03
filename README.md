@@ -1,5 +1,7 @@
 # Forward Proxy
 
+[![CI](https://github.com/vidyarani/forward-proxy/actions/workflows/ci.yml/badge.svg)](https://github.com/vidyarani/forward-proxy/actions/workflows/ci.yml)
+
 A forward proxy server written in Ruby. Supports HTTP forwarding, CONNECT tunnelling, and MITM TLS interception.
 
 ## Requirements
